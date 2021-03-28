@@ -23,12 +23,17 @@ namespace magic.lambda.csv
         /// <param name="input">Arguments to slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
+            // Buffer to keep CSV data.
             var builder = new StringBuilder();
+
+            // Looping through each node we should transform to a CSV record.
             var first = true;
             foreach (var idx in input.Evaluate())
             {
+                // Checking if this is the first record, at which point we create headers for CSV file.
                 if (first)
                 {
+                    // Creating CSV headers.
                     first = false;
                     var firstHeader = true;
                     foreach (var idxHeader in idx.Children)
@@ -41,6 +46,8 @@ namespace magic.lambda.csv
                     }
                     builder.Append("\r\n");
                 }
+
+                // Looping through each child node of currently iterated record, to create our cells.
                 var firstValue = true;
                 foreach (var idxValue in idx.Children)
                 {
@@ -49,6 +56,8 @@ namespace magic.lambda.csv
                     else
                         builder.Append(",");
                     var value = idxValue.Value;
+
+                    // Making sure we escape string values correctly.
                     if (!(value is null))
                     {
                         if (value is string)
@@ -59,6 +68,8 @@ namespace magic.lambda.csv
                 }
                 builder.Append("\r\n");
             }
+
+            // Returning CSV content to caller.
             input.Value = builder.ToString();
         }
     }

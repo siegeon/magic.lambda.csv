@@ -3,9 +3,10 @@
  * See the enclosed LICENSE file for details.
  */
 
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Globalization;
+using System.Collections.Generic;
 using CsvHelper;
 using magic.node;
 using magic.node.extensions;
@@ -29,6 +30,16 @@ namespace magic.lambda.csv
             // Getting raw CSV text, and making sure we remove any expressions or value in identity node.
             var csv = input.GetEx<string>();
             input.Value = null;
+
+            // Creating our dictionary to hold type information.
+            var types = new Dictionary<string, string>();
+            foreach (var idx in input.Children)
+            {
+                types[idx.Name] = idx.GetEx<string>();
+            }
+
+            // House cleaning.
+            input.Clear();
 
             // Reading through CSV file.
             using (var reader = new StringReader(csv))
@@ -55,7 +66,17 @@ namespace magic.lambda.csv
                             var cur = new Node(".");
                             for (var idx = 0; idx < columns.Count; idx++)
                             {
-                                cur.Add(new Node(columns[idx], parser.Record[idx]));
+                                var stringValue = parser.Record[idx];
+
+                                /*
+                                 * Converting according to specified type information.
+                                 */
+                                if (string.IsNullOrEmpty(stringValue))
+                                    cur.Add(new Node(columns[idx])); // Null value
+                                else if (types.TryGetValue(columns[idx], out string type))
+                                    cur.Add(new Node(columns[idx], Converter.ToObject(stringValue, type))); // We have type information for current cell
+                                else
+                                    cur.Add(new Node(columns[idx], stringValue)); // No type information specified for current cell
                             }
                             input.Add(cur);
                         }

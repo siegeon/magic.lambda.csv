@@ -3,7 +3,10 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System;
+using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
@@ -26,6 +29,9 @@ namespace magic.lambda.csv
             // Buffer to keep CSV data.
             var builder = new StringBuilder();
 
+            // List containing type information.
+            var types = new List<Tuple<string, string>>();
+
             // Looping through each node we should transform to a CSV record.
             var first = true;
             foreach (var idx in input.Evaluate())
@@ -43,12 +49,14 @@ namespace magic.lambda.csv
                         else
                             builder.Append(",");
                         builder.Append(idxHeader.Name);
+                        types.Add(new Tuple<string, string>(idxHeader.Name, null));
                     }
                     builder.Append("\r\n");
                 }
 
                 // Looping through each child node of currently iterated record, to create our cells.
                 var firstValue = true;
+                var index = 0;
                 foreach (var idxValue in idx.Children)
                 {
                     if (firstValue)
@@ -64,13 +72,17 @@ namespace magic.lambda.csv
                             builder.Append("\"" + idxValue.GetEx<string>().ToString().Replace("\"", "\"\"") + "\"");
                         else
                             builder.Append(Converter.ToString(value).Item2);
+                        if (types[index].Item2 == null)
+                            types[index] = new Tuple<string, string>(types[index].Item1, Converter.ToString(value).Item1);
                     }
+                    index ++;
                 }
                 builder.Append("\r\n");
             }
 
             // Returning CSV content to caller.
             input.Value = builder.ToString();
+            input.AddRange(types.Select(x => new Node(x.Item1, x.Item2)));
         }
     }
 }

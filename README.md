@@ -6,6 +6,7 @@
 This project provides CSV helper slots for Magic. More specifically, it provides the following slots.
 
 * __[lambda2csv]__ - Creates CSV string from a lambda object.
+* __[csv2lambda]__ - Creates a lambda object from a CSV string.
 
 ## Usage
 
@@ -18,7 +19,14 @@ This project provides CSV helper slots for Magic. More specifically, it provides
       name:John Doe
       age:int:67
 lambda2csv:x:-/*
+add:x:+
+   get-nodes:x:@lambda2csv/*
+csv2lambda:x:@lambda2csv
 ```
+
+Notice, the **[lambda2csv]** slot will return type information, and the **[csv2lambda]** slot can optionally be
+given type information, allowing you to convert correctly back to the correct type(s) as you convert a CSV
+string to its lambda objects. The **[lambda2csv]** slot will also create headers for your object.
 
 ## Quality gates
 

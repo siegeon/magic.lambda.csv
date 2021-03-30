@@ -10,7 +10,7 @@
     <Description>CSV helper slots for Magic to help you transform lambda to CSV. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.lambda.csv</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>8.9.3</PackageVersion>
+    <PackageVersion>8.9.9</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.lambda.csv.git</RepositoryUrl>

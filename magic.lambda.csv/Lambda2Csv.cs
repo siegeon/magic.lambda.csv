@@ -34,7 +34,7 @@ namespace magic.lambda.csv
 
             // Looping through each node we should transform to a CSV record.
             var first = true;
-            foreach (var idx in input.Evaluate())
+            foreach (var idx in input.Value == null ? input.Children : input.Evaluate())
             {
                 // Checking if this is the first record, at which point we create headers for CSV file.
                 if (first)

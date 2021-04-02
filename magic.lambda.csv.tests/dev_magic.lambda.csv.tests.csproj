@@ -5,7 +5,7 @@
 
     <IsPackable>false</IsPackable>
 
-    <AssemblyName>magic.lambda.json.tests</AssemblyName>
+    <AssemblyName>magic.lambda.csv.tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

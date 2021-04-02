@@ -28,6 +28,9 @@ Notice, the **[lambda2csv]** slot will return type information, and the **[csv2l
 given type information, allowing you to convert correctly back to the correct type(s) as you convert a CSV
 string to its lambda objects. The **[lambda2csv]** slot will also create headers for your object.
 
+This allows you to roundtrip from a lambda object, to CSV format, and back to lambda again, without loosing
+type information. This is necessary since CSV doesn't preserve types in any ways.
+
 ## Quality gates
 
 - [![Build status](https://travis-ci.com/polterguy/magic.lambda.csv.svg?master)](https://travis-ci.com/polterguy/magic.lambda.csv)

@@ -1,0 +1,8 @@
+﻿language: csharp
+solution: magic.lambda.csv.sln
+mono: none
+dotnet: 5.0
+script:
+ - dotnet restore
+ - dotnet build
+ - dotnet test

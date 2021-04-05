@@ -4,7 +4,6 @@
  */
 
 using System.IO;
-using System.Linq;
 using System.Globalization;
 using System.Collections.Generic;
 using CsvHelper;
@@ -71,7 +70,7 @@ namespace magic.lambda.csv
                                 /*
                                  * Converting according to specified type information.
                                  */
-                                if (string.IsNullOrEmpty(stringValue))
+                                if (stringValue == "[NULL]")
                                     cur.Add(new Node(columns[idx])); // Null value
                                 else if (types.TryGetValue(columns[idx], out string type))
                                     cur.Add(new Node(columns[idx], Converter.ToObject(stringValue, type))); // We have type information for current cell

@@ -70,6 +70,8 @@ namespace magic.lambda.csv
                     {
                         if (value is string)
                             builder.Append("\"" + idxValue.GetEx<string>().ToString().Replace("\"", "\"\"") + "\"");
+                        else if (value == null)
+                            builder.Append("[NULL]");
                         else
                             builder.Append(Converter.ToString(value).Item2);
                         if (types[index].Item2 == null)

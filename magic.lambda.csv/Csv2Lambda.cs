@@ -4,6 +4,7 @@
  */
 
 using System.IO;
+using System.Linq;
 using System.Globalization;
 using System.Collections.Generic;
 using CsvHelper;
@@ -32,10 +33,20 @@ namespace magic.lambda.csv
 
             // Creating our dictionary to hold type information.
             var types = new Dictionary<string, string>();
-            foreach (var idx in input.Children)
+            var typesNode = input.Children.FirstOrDefault(x => x.Name == "types");
+            if (typesNode != null)
             {
-                types[idx.Name] = idx.GetEx<string>();
+                foreach (var idx in typesNode.Children)
+                {
+                    types[idx.Name] = idx.GetEx<string>();
+                }
             }
+
+            // Retrieving nullable argument.
+            string nullValue = "[NULL]";
+            var nullArgument = input.Children.FirstOrDefault(x => x.Name == "null-value");
+            if (nullArgument != null)
+                nullValue = nullArgument.GetEx<string>();
 
             // House cleaning.
             input.Clear();
@@ -70,7 +81,7 @@ namespace magic.lambda.csv
                                 /*
                                  * Converting according to specified type information.
                                  */
-                                if (stringValue == "[NULL]")
+                                if (stringValue == nullValue)
                                     cur.Add(new Node(columns[idx])); // Null value
                                 else if (types.TryGetValue(columns[idx], out string type))
                                     cur.Add(new Node(columns[idx], Converter.ToObject(stringValue, type))); // We have type information for current cell

@@ -32,9 +32,15 @@ namespace magic.lambda.csv
             // List containing type information.
             var types = new List<Tuple<string, string>>();
 
+            // Retrieving nullable argument.
+            string nullValue = "[NULL]";
+            var nullArgument = input.Children.FirstOrDefault(x => x.Name == "null-value");
+            if (nullArgument != null)
+                nullValue = nullArgument.GetEx<string>();
+
             // Looping through each node we should transform to a CSV record.
             var first = true;
-            foreach (var idx in input.Value == null ? input.Children : input.Evaluate())
+            foreach (var idx in input.Evaluate())
             {
                 // Checking if this is the first record, at which point we create headers for CSV file.
                 if (first)
@@ -68,7 +74,7 @@ namespace magic.lambda.csv
                     // Making sure we escape string values correctly.
                     if (value == null)
                     {
-                        builder.Append("[NULL]");
+                        builder.Append(nullValue);
                     }
                     else
                     {

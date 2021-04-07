@@ -6,6 +6,7 @@
 using System.Linq;
 using Xunit;
 using magic.node;
+using magic.node.extensions;
 
 namespace magic.lambda.csv.tests
 {
@@ -23,16 +24,6 @@ Thomas,55");
         }
 
         [Fact]
-        public void FromLambdaSimpleObject()
-        {
-            var signaler = Common.GetSignaler();
-            var node = new Node("");
-            node.Add(new Node(".", null, new Node[] { new Node("Name", "Thomas"), new Node("Age", 55) }));
-            signaler.Signal("lambda2csv", node);
-            Assert.Equal("Name,Age\r\n\"Thomas\",55\r\n", node.Value);
-        }
-
-        [Fact]
         public void FromLambdaAndBackAgainWithTyping()
         {
             var result = Common.Evaluate(@"
@@ -44,9 +35,10 @@ Thomas,55");
       name:John
       age:67
 lambda2csv:x:-/*
-add:x:+
+add:x:+/*/types
    get-nodes:x:@lambda2csv/*
 csv2lambda:x:@lambda2csv
+   types
 ");
             Assert.Equal("name", result.Children.Last().Children.First().Children.First().Name);
             Assert.Equal("Thomas", result.Children.Last().Children.First().Children.First().Value);
@@ -64,15 +56,16 @@ csv2lambda:x:@lambda2csv
             var result = Common.Evaluate(@"
 .data
    .
-      name:[NULL]
+      name
       age:int:55
    .
       name:John
-      age:[NULL]
+      age
 lambda2csv:x:-/*
-add:x:+
+add:x:+/*/types
    get-nodes:x:@lambda2csv/*
 csv2lambda:x:@lambda2csv
+   types
 ");
             Assert.Equal("name", result.Children.Last().Children.First().Children.First().Name);
             Assert.Null(result.Children.Last().Children.First().Children.First().Value);
@@ -82,6 +75,36 @@ csv2lambda:x:@lambda2csv
             Assert.Equal("John", result.Children.Last().Children.Skip(1).First().Children.First().Value);
             Assert.Equal("age", result.Children.Last().Children.Skip(1).First().Children.Skip(1).First().Name);
             Assert.Null(result.Children.Last().Children.Skip(1).First().Children.Skip(1).First().Value);
+        }
+
+        [Fact]
+        public void FromLambdaAndBackAgainWithAlternativeNull()
+        {
+            var result = Common.Evaluate(@"
+.data
+   .
+      name
+      age:int:55
+   .
+      name:John
+      age
+lambda2csv:x:-/*
+   null-value:foo
+add:x:+/*/types
+   get-nodes:x:@lambda2csv/*
+csv2lambda:x:@lambda2csv
+   null-value:foo
+   types
+");
+            Assert.Equal("name", result.Children.Last().Children.First().Children.First().Name);
+            Assert.Null(result.Children.Last().Children.First().Children.First().Value);
+            Assert.Equal("age", result.Children.Last().Children.First().Children.Skip(1).First().Name);
+            Assert.Equal(55, result.Children.Last().Children.First().Children.Skip(1).First().Value);
+            Assert.Equal("name", result.Children.Last().Children.Skip(1).First().Children.First().Name);
+            Assert.Equal("John", result.Children.Last().Children.Skip(1).First().Children.First().Value);
+            Assert.Equal("age", result.Children.Last().Children.Skip(1).First().Children.Skip(1).First().Name);
+            Assert.Null(result.Children.Last().Children.Skip(1).First().Children.Skip(1).First().Value);
+            Assert.Contains("foo,", result.Children.Skip(1).First().GetEx<string>());
         }
     }
 }

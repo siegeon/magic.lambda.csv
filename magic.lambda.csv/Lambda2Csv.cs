@@ -66,12 +66,14 @@ namespace magic.lambda.csv
                     var value = idxValue.Value;
 
                     // Making sure we escape string values correctly.
-                    if (!(value is null))
+                    if (value == null)
+                    {
+                        builder.Append("[NULL]");
+                    }
+                    else
                     {
                         if (value is string)
                             builder.Append("\"" + idxValue.GetEx<string>().ToString().Replace("\"", "\"\"") + "\"");
-                        else if (value == null)
-                            builder.Append("[NULL]");
                         else
                             builder.Append(Converter.ToString(value).Item2);
                         if (types[index].Item2 == null)

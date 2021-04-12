@@ -33,10 +33,7 @@ namespace magic.lambda.csv
             var types = new List<Tuple<string, string>>();
 
             // Retrieving nullable argument.
-            string nullValue = "[NULL]";
-            var nullArgument = input.Children.FirstOrDefault(x => x.Name == "null-value");
-            if (nullArgument != null)
-                nullValue = nullArgument.GetEx<string>();
+            string nullValue = GetNullableValue(input);
 
             // Looping through each node we should transform to a CSV record.
             var first = true;
@@ -47,52 +44,92 @@ namespace magic.lambda.csv
                 {
                     // Creating CSV headers.
                     first = false;
-                    var firstHeader = true;
-                    foreach (var idxHeader in idx.Children)
-                    {
-                        if (firstHeader)
-                            firstHeader = false;
-                        else
-                            builder.Append(",");
-                        builder.Append(idxHeader.Name);
-                        types.Add(new Tuple<string, string>(idxHeader.Name, null));
-                    }
-                    builder.Append("\r\n");
+                    CreateHeaders(idx, builder, types);
                 }
 
                 // Looping through each child node of currently iterated record, to create our cells.
-                var firstValue = true;
-                var index = 0;
-                foreach (var idxValue in idx.Children)
-                {
-                    if (firstValue)
-                        firstValue = false;
-                    else
-                        builder.Append(",");
-                    var value = idxValue.Value;
-
-                    // Making sure we escape string values correctly.
-                    if (value == null)
-                    {
-                        builder.Append(nullValue);
-                    }
-                    else
-                    {
-                        if (value is string)
-                            builder.Append("\"" + idxValue.GetEx<string>().ToString().Replace("\"", "\"\"") + "\"");
-                        else
-                            builder.Append(Converter.ToString(value).Item2);
-                        if (types[index].Item2 == null)
-                            types[index] = new Tuple<string, string>(types[index].Item1, Converter.ToString(value).Item1);
-                    }
-                    index ++;
-                }
-                builder.Append("\r\n");
+                CreateRecord(idx, builder, nullValue, types);
             }
 
             // Returning CSV content to caller.
             input.Value = builder.ToString();
             input.AddRange(types.Select(x => new Node(x.Item1, x.Item2)));
         }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Appends one single record into specified StringBuilder.
+         */
+        void CreateRecord(
+            Node current,
+            StringBuilder builder,
+            string nullValue,
+            List<Tuple<string, string>> types)
+        {
+            // Looping through each child node of currently iterated record, to create our cells.
+            var firstValue = true;
+            var index = 0;
+            foreach (var idxValue in current.Children)
+            {
+                if (firstValue)
+                    firstValue = false;
+                else
+                    builder.Append(",");
+                var value = idxValue.Value;
+
+                // Making sure we escape string values correctly.
+                if (value == null)
+                {
+                    builder.Append(nullValue);
+                }
+                else
+                {
+                    if (value is string)
+                        builder.Append("\"" + idxValue.GetEx<string>().ToString().Replace("\"", "\"\"") + "\"");
+                    else
+                        builder.Append(Converter.ToString(value).Item2);
+                    if (types[index].Item2 == null)
+                        types[index] = new Tuple<string, string>(types[index].Item1, Converter.ToString(value).Item1);
+                }
+                index ++;
+            }
+            builder.Append("\r\n");
+        }
+
+        /*
+         * Appends headers into specified string builder.
+         */
+        void CreateHeaders(
+            Node current,
+            StringBuilder builder,
+            List<Tuple<string, string>> types)
+        {
+            var firstHeader = true;
+            foreach (var idxHeader in current.Children)
+            {
+                if (firstHeader)
+                    firstHeader = false;
+                else
+                    builder.Append(",");
+                builder.Append(idxHeader.Name);
+                types.Add(new Tuple<string, string>(idxHeader.Name, null));
+            }
+            builder.Append("\r\n");
+        }
+
+        /*
+         * Helper method to retrieve null string value if existing.
+         */
+        string GetNullableValue(Node input)
+        {
+            string nullValue = "[NULL]";
+            var nullArgument = input.Children.FirstOrDefault(x => x.Name == "null-value");
+            if (nullArgument != null)
+                nullValue = nullArgument.GetEx<string>();
+            return nullValue;
+        }
+
+        #endregion
     }
 }

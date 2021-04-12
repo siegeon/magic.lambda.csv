@@ -27,11 +27,84 @@ namespace magic.lambda.csv
         /// <param name="input">Arguments to slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
+            // Retrieving all arguments, including actual CSV content.
+            var args = GetArgs(input);
+
+            // Creating our string reader that CsvParser requires
+            using (var reader = new StringReader(args.CSV))
+            {
+                // Creating our actual CSV parser instance, wrapping StringReader.
+                using (var parser = new CsvParser(reader, CultureInfo.InvariantCulture))
+                {
+                    // Buffer for column names, assuming CSV file contains headers.
+                    var columns = GetHeaders(parser);
+
+                    // If above returns null, CSV file is empty.
+                    if (columns == null)
+                        return; // Nothing to see here ...
+
+                    // Reading through each record in CSV file.
+                    while (parser.Read())
+                    {
+                        var cur = new Node(".");
+                        for (var idx = 0; idx < columns.Count; idx++)
+                        {
+                            var stringValue = parser.Record[idx];
+
+                            /*
+                             * Converting according to specified type information.
+                             */
+                            if (stringValue == args.NullableValue)
+                                cur.Add(new Node(columns[idx])); // Null value
+                            else if (args.Types.TryGetValue(columns[idx], out string type))
+                                cur.Add(new Node(columns[idx], Converter.ToObject(stringValue, type))); // We have type information for current cell
+                            else
+                                cur.Add(new Node(columns[idx], stringValue)); // No type information specified for current cell
+                        }
+                        input.Add(cur);
+                    }
+                }
+            }
+        }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Returns headers from CSV file.
+         */
+        List<string> GetHeaders(CsvParser parser)
+        {
+            if (parser.Read())
+                return parser.Record.ToList();
+            return null;
+        }
+
+        /*
+         * Helper method to retrieve arguments to invocation.
+         */
+        (string CSV, Dictionary<string, string> Types, string NullableValue) GetArgs(Node input)
+        {
             // Getting raw CSV text, and making sure we remove any expressions or value in identity node.
             var csv = input.GetEx<string>();
             input.Value = null;
 
             // Creating our dictionary to hold type information.
+            var types = GetTypes(input);
+
+            // Retrieving nullable argument.
+            string nullValue = GetNullableValue(input);
+
+            // House cleaning.
+            input.Clear();
+
+            return (csv, types, nullValue);
+        }
+
+        /*
+         * Helper method to retrieve type information from arguments.
+         */
+        Dictionary<string, string> GetTypes(Node input)
+        {
             var types = new Dictionary<string, string>();
             var typesNode = input.Children.FirstOrDefault(x => x.Name == "types");
             if (typesNode != null)
@@ -41,58 +114,21 @@ namespace magic.lambda.csv
                     types[idx.Name] = idx.GetEx<string>();
                 }
             }
+            return types;
+        }
 
-            // Retrieving nullable argument.
+        /*
+         * Helper method to retrieve null string value if existing.
+         */
+        string GetNullableValue(Node input)
+        {
             string nullValue = "[NULL]";
             var nullArgument = input.Children.FirstOrDefault(x => x.Name == "null-value");
             if (nullArgument != null)
                 nullValue = nullArgument.GetEx<string>();
-
-            // House cleaning.
-            input.Clear();
-
-            // Reading through CSV file.
-            using (var reader = new StringReader(csv))
-            {
-                using (var parser = new CsvParser(reader, CultureInfo.InvariantCulture))
-                {
-                    // Buffer for column names, assuming CSV file contains headers.
-                    var columns = new List<string>();
-
-                    // Reading through each record in CSV file.
-                    var first = true;
-                    while (parser.Read())
-                    {
-                        // Checking if we're reading headers.
-                        if (first)
-                        {
-                            // Header row.
-                            first = false;
-                            columns.AddRange(parser.Record);
-                        }
-                        else
-                        {
-                            // Normal record.
-                            var cur = new Node(".");
-                            for (var idx = 0; idx < columns.Count; idx++)
-                            {
-                                var stringValue = parser.Record[idx];
-
-                                /*
-                                 * Converting according to specified type information.
-                                 */
-                                if (stringValue == nullValue)
-                                    cur.Add(new Node(columns[idx])); // Null value
-                                else if (types.TryGetValue(columns[idx], out string type))
-                                    cur.Add(new Node(columns[idx], Converter.ToObject(stringValue, type))); // We have type information for current cell
-                                else
-                                    cur.Add(new Node(columns[idx], stringValue)); // No type information specified for current cell
-                            }
-                            input.Add(cur);
-                        }
-                    }
-                }
-            }
+            return nullValue;
         }
+
+        #endregion
     }
 }

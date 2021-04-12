@@ -40,7 +40,7 @@ namespace magic.lambda.csv
                     var columns = GetHeaders(parser);
 
                     // If above returns null, CSV file is empty.
-                    if (columns == null)
+                    if (!columns.Any())
                         return; // Nothing to see here ...
 
                     // Reading through each record in CSV file.
@@ -76,7 +76,7 @@ namespace magic.lambda.csv
         {
             if (parser.Read())
                 return parser.Record.ToList();
-            return null;
+            return new List<string>();
         }
 
         /*

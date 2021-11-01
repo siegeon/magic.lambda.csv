@@ -25,7 +25,7 @@ namespace magic.lambda.csv.tests
 
         static public Node Evaluate(string hl)
         {
-            var lambda = new Parser(hl).Lambda();
+            var lambda = HyperlambdaParser.Parse(hl);
             var signaler = Initialize().GetService(typeof(ISignaler)) as ISignaler;
             signaler.Signal("eval", lambda);
             return lambda;

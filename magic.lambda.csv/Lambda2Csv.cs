@@ -105,14 +105,14 @@ namespace magic.lambda.csv
             List<Tuple<string, string>> types)
         {
             var firstHeader = true;
-            foreach (var idxHeader in current.Children)
+            foreach (var idxHeader in current.Children.Select(x => x.Name))
             {
                 if (firstHeader)
                     firstHeader = false;
                 else
                     builder.Append(",");
-                builder.Append(idxHeader.Name);
-                types.Add(new Tuple<string, string>(idxHeader.Name, null));
+                builder.Append(idxHeader);
+                types.Add(new Tuple<string, string>(idxHeader, null));
             }
             builder.Append("\r\n");
         }

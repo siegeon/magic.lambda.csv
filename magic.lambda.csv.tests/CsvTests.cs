@@ -23,6 +23,15 @@ Thomas,55");
         }
 
         [Fact]
+        public void FromEmptyString()
+        {
+            var signaler = Common.GetSignaler();
+            var node = new Node("", @"");
+            signaler.Signal("csv2lambda", node);
+            Assert.Empty(node.Children);
+        }
+
+        [Fact]
         public void FromLambdaAndBackAgainWithTyping()
         {
             var result = Common.Evaluate(@"
